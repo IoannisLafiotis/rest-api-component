@@ -1,21 +1,19 @@
 FROM node:10-alpine AS base
-WORKDIR /app
-RUN apk update && apk add --no-cache \
-    bash
-COPY lib/actions lib/actions
-COPY component.json component.json
-COPY package.json package.json
-COPY README.md README.md
-
-FROM base AS dependencies
-RUN apk update && apk add --no-cache \
+RUN apk --no-cache add \
     python \
+    make \
     g++ \
-    make
+    libc6-compat
+
+WORKDIR /usr/src/app
+
+COPY package.json /usr/src/app
+
 RUN npm install --production
 
-FROM base AS release
-COPY --from=dependencies /app/node_modules ./node_modules
+COPY . /usr/src/app
+
 RUN chown -R node:node .
+
 USER node
 ENTRYPOINT ["node", "./node_modules/@openintegrationhub/ferryman/runGlobal.js"]
